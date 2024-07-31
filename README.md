@@ -100,7 +100,11 @@ Contributions to SAD Go Telemetry are welcome! Please submit pull requests with 
 
 ## License
 
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
+This project is licensed under the MIT License - see the [LICENSE] file for details.
+
+Copyright (c) 2024 SAD co.
 
 ## Support
 
