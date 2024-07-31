@@ -98,10 +98,6 @@ The telemetry module uses the OpenTelemetry SDK, which supports various exporter
 
 Contributions to SAD Go Telemetry are welcome! Please submit pull requests with any enhancements, bug fixes, or new features.
 
-## Support
-
-For issues, feature requests, or questions, please file an issue on the GitHub repository.
-
 ## License
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -110,4 +106,6 @@ This project is licensed under the MIT License - see the [LICENSE] file for deta
 
 Copyright (c) 2024 SAD co.
 
+## Support
 
+For issues, feature requests, or questions, please file an issue on the GitHub repository.
