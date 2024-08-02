@@ -7,6 +7,7 @@ import (
 	"context"
 	"os"
 
+	"github.com/sadco-io/sad-go-logger/logger"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -27,9 +28,6 @@ var (
 
 	// meter is the global meter used for recording metrics.
 	meter metric.Meter
-
-	// logger is the global logger for the telemetry package.
-	logger *zap.Logger
 
 	// serviceName is the name of the current service, used for identifying
 	// the source of telemetry data.
@@ -52,13 +50,6 @@ var (
 // configuration from environment variables, and initializes the OpenTelemetry
 // provider.
 func init() {
-	var err error
-
-	// Initialize the logger
-	logger, err = zap.NewProduction()
-	if err != nil {
-		panic(err)
-	}
 
 	// Set the service name from environment variable
 	serviceName = os.Getenv("SERVICE_NAME")
@@ -72,6 +63,7 @@ func init() {
 	metricsEnabled = os.Getenv("OTEL_METRICS_ENABLED") == "true"
 	traceEndpoint = os.Getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
 	metricEndpoint = os.Getenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT")
+	instrument := os.Getenv("INSTRUMENT")
 
 	// Initialize the OpenTelemetry provider
 	if err := initProvider(); err != nil {
@@ -81,6 +73,18 @@ func init() {
 	// Create global tracer and meter instances
 	tracer = otel.Tracer(serviceName)
 	meter = otel.Meter(serviceName)
+
+	// Initialize AppInsights if enabled
+	if instrument == "APPINSIGHTS" {
+		iKey := os.Getenv("APPINSIGHTS_INSTRUMENTATIONKEY")
+		hostName, err := os.Hostname()
+		if err != nil {
+			logger.Log.Warn("Error retrieving hostname: %v", zap.Error(err))
+			logger.Log.Warn("Setting hostname to unkw")
+			hostName = "unkw"
+		}
+		NewTelemetryAppInsights(iKey, hostName, serviceName, traceEnabled, metricsEnabled)
+	}
 }
 
 // initProvider sets up the OpenTelemetry trace and metric providers based on
