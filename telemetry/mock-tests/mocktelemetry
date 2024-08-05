@@ -1,0 +1,288 @@
+package telemetry
+
+import (
+	"context"
+	"sync"
+	"time"
+
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+)
+
+// MockTelemetry is a mock implementation of the Telemetry interface
+type MockTelemetry struct {
+	mu sync.Mutex
+
+	StartSpanCalls         []StartSpanCall
+	EndSpanCalls           []EndSpanCall
+	AddEventCalls          []AddEventCall
+	RecordMetricCalls      []RecordMetricCall
+	IncrementCounterCalls  []IncrementCounterCall
+	RecordGaugeCalls       []RecordGaugeCall
+	LogInfoCalls           []LogInfoCall
+	LogWarningCalls        []LogWarningCall
+	LogErrorCalls          []LogErrorCall
+	TrackRequestCalls      []TrackRequestCall
+	TrackDependencyCalls   []TrackDependencyCall
+	TrackAvailabilityCalls []TrackAvailabilityCall
+	SetUserCalls           []SetUserCall
+	SetSessionCalls        []SetSessionCall
+	ShutdownCalls          []ShutdownCall
+	PostEventCalls         []PostEventCall
+	PostTraceCalls         []PostTraceCall
+}
+
+// StartSpanCall represents a call to the StartSpan method
+type StartSpanCall struct {
+	Ctx  context.Context
+	Name string
+}
+
+// EndSpanCall represents a call to the EndSpan method
+type EndSpanCall struct {
+	Span trace.Span
+}
+
+// AddEventCall represents a call to the AddEvent method
+type AddEventCall struct {
+	Span       trace.Span
+	Name       string
+	Attributes []attribute.KeyValue
+}
+
+// RecordMetricCall represents a call to the RecordMetric method
+type RecordMetricCall struct {
+	Ctx        context.Context
+	Name       string
+	Value      float64
+	Attributes []attribute.KeyValue
+}
+
+// IncrementCounterCall represents a call to the IncrementCounter method
+type IncrementCounterCall struct {
+	Ctx        context.Context
+	Name       string
+	Increment  float64
+	Attributes []attribute.KeyValue
+}
+
+// RecordGaugeCall represents a call to the RecordGauge method
+type RecordGaugeCall struct {
+	Ctx        context.Context
+	Name       string
+	Value      float64
+	Attributes []attribute.KeyValue
+}
+
+// LogInfoCall represents a call to the LogInfo method
+type LogInfoCall struct {
+	Ctx        context.Context
+	Message    string
+	Attributes []attribute.KeyValue
+}
+
+// LogWarningCall represents a call to the LogWarning method
+type LogWarningCall struct {
+	Ctx        context.Context
+	Message    string
+	Attributes []attribute.KeyValue
+}
+
+// LogErrorCall represents a call to the LogError method
+type LogErrorCall struct {
+	Ctx        context.Context
+	Message    string
+	Err        error
+	Attributes []attribute.KeyValue
+}
+
+// TrackRequestCall represents a call to the TrackRequest method
+type TrackRequestCall struct {
+	Ctx          context.Context
+	Method       string
+	URL          string
+	Duration     time.Duration
+	ResponseCode string
+}
+
+// TrackDependencyCall represents a call to the TrackDependency method
+type TrackDependencyCall struct {
+	Ctx            context.Context
+	DependencyType string
+	Target         string
+	Duration       time.Duration
+	Success        bool
+}
+
+// TrackAvailabilityCall represents a call to the TrackAvailability method
+type TrackAvailabilityCall struct {
+	Ctx      context.Context
+	Name     string
+	Duration time.Duration
+	Success  bool
+}
+
+// SetUserCall represents a call to the SetUser method
+type SetUserCall struct {
+	Ctx context.Context
+	ID  string
+}
+
+// SetSessionCall represents a call to the SetSession method
+type SetSessionCall struct {
+	Ctx context.Context
+	ID  string
+}
+
+// ShutdownCall represents a call to the Shutdown method
+type ShutdownCall struct {
+	Ctx context.Context
+}
+
+// PostEventCall represents a call to the PostEvent method
+type PostEventCall struct {
+	Ctx        context.Context
+	Name       string
+	Properties map[string]string
+}
+
+// PostTraceCall represents a call to the PostTrace method
+type PostTraceCall struct {
+	Ctx        context.Context
+	Message    string
+	Severity   SeverityLevel
+	Properties map[string]string
+}
+
+// StartSpan records the call to StartSpan and returns a new context and a mock span
+func (m *MockTelemetry) StartSpan(ctx context.Context, name string) (context.Context, trace.Span) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.StartSpanCalls = append(m.StartSpanCalls, StartSpanCall{Ctx: ctx, Name: name})
+	return ctx, &MockSpan{}
+}
+
+// EndSpan records the call to EndSpan
+func (m *MockTelemetry) EndSpan(span trace.Span) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.EndSpanCalls = append(m.EndSpanCalls, EndSpanCall{Span: span})
+}
+
+// AddEvent records the call to AddEvent
+func (m *MockTelemetry) AddEvent(span trace.Span, name string, attributes ...attribute.KeyValue) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.AddEventCalls = append(m.AddEventCalls, AddEventCall{Span: span, Name: name, Attributes: attributes})
+}
+
+// RecordMetric records the call to RecordMetric
+func (m *MockTelemetry) RecordMetric(ctx context.Context, name string, value float64, attributes ...attribute.KeyValue) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.RecordMetricCalls = append(m.RecordMetricCalls, RecordMetricCall{Ctx: ctx, Name: name, Value: value, Attributes: attributes})
+}
+
+// IncrementCounter records the call to IncrementCounter
+func (m *MockTelemetry) IncrementCounter(ctx context.Context, name string, increment float64, attributes ...attribute.KeyValue) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.IncrementCounterCalls = append(m.IncrementCounterCalls, IncrementCounterCall{Ctx: ctx, Name: name, Increment: increment, Attributes: attributes})
+}
+
+// RecordGauge records the call to RecordGauge
+func (m *MockTelemetry) RecordGauge(ctx context.Context, name string, value float64, attributes ...attribute.KeyValue) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.RecordGaugeCalls = append(m.RecordGaugeCalls, RecordGaugeCall{Ctx: ctx, Name: name, Value: value, Attributes: attributes})
+}
+
+// LogInfo records the call to LogInfo
+func (m *MockTelemetry) LogInfo(ctx context.Context, message string, attributes ...attribute.KeyValue) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.LogInfoCalls = append(m.LogInfoCalls, LogInfoCall{Ctx: ctx, Message: message, Attributes: attributes})
+}
+
+// LogWarning records the call to LogWarning
+func (m *MockTelemetry) LogWarning(ctx context.Context, message string, attributes ...attribute.KeyValue) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.LogWarningCalls = append(m.LogWarningCalls, LogWarningCall{Ctx: ctx, Message: message, Attributes: attributes})
+}
+
+// LogError records the call to LogError
+func (m *MockTelemetry) LogError(ctx context.Context, message string, err error, attributes ...attribute.KeyValue) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.LogErrorCalls = append(m.LogErrorCalls, LogErrorCall{Ctx: ctx, Message: message, Err: err, Attributes: attributes})
+}
+
+// TrackRequest records the call to TrackRequest
+func (m *MockTelemetry) TrackRequest(ctx context.Context, method, url string, duration time.Duration, responseCode string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.TrackRequestCalls = append(m.TrackRequestCalls, TrackRequestCall{Ctx: ctx, Method: method, URL: url, Duration: duration, ResponseCode: responseCode})
+}
+
+// TrackDependency records the call to TrackDependency
+func (m *MockTelemetry) TrackDependency(ctx context.Context, dependencyType, target string, duration time.Duration, success bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.TrackDependencyCalls = append(m.TrackDependencyCalls, TrackDependencyCall{Ctx: ctx, DependencyType: dependencyType, Target: target, Duration: duration, Success: success})
+}
+
+// TrackAvailability records the call to TrackAvailability
+func (m *MockTelemetry) TrackAvailability(ctx context.Context, name string, duration time.Duration, success bool) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.TrackAvailabilityCalls = append(m.TrackAvailabilityCalls, TrackAvailabilityCall{Ctx: ctx, Name: name, Duration: duration, Success: success})
+}
+
+// SetUser records the call to SetUser
+func (m *MockTelemetry) SetUser(ctx context.Context, id string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.SetUserCalls = append(m.SetUserCalls, SetUserCall{Ctx: ctx, ID: id})
+}
+
+// SetSession records the call to SetSession
+func (m *MockTelemetry) SetSession(ctx context.Context, id string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.SetSessionCalls = append(m.SetSessionCalls, SetSessionCall{Ctx: ctx, ID: id})
+}
+
+// Shutdown records the call to Shutdown
+func (m *MockTelemetry) Shutdown(ctx context.Context) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.ShutdownCalls = append(m.ShutdownCalls, ShutdownCall{Ctx: ctx})
+}
+
+// PostEvent records the call to PostEvent
+func (m *MockTelemetry) PostEvent(ctx context.Context, name string, properties map[string]string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.PostEventCalls = append(m.PostEventCalls, PostEventCall{Ctx: ctx, Name: name, Properties: properties})
+}
+
+// PostTrace records the call to PostTrace
+func (m *MockTelemetry) PostTrace(ctx context.Context, message string, severity SeverityLevel, properties map[string]string) {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	m.PostTraceCalls = append(m.PostTraceCalls, PostTraceCall{Ctx: ctx, Message: message, Severity: severity, Properties: properties})
+}
+
+// MockSpan is a mock implementation of the trace.Span interface
+type MockSpan struct{}
+
+func (s *MockSpan) End(options ...trace.SpanEndOption)                  {}
+func (s *MockSpan) AddEvent(name string, options ...trace.EventOption)  {}
+func (s *MockSpan) IsRecording() bool                                   { return true }
+func (s *MockSpan) RecordError(err error, options ...trace.EventOption) {}
+func (s *MockSpan) SpanContext() trace.SpanContext                      { return trace.SpanContext{} }
+func (s *MockSpan) SetStatus(code trace.StatusCode, description string) {}
+func (s *MockSpan) SetName(name string)                                 {}
+func (s *MockSpan) SetAttributes(kv ...attribute.KeyValue)              {}
+func (s *MockSpan) TracerProvider() trace.TracerProvider                { return nil }
