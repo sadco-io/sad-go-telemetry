@@ -1,3 +1,5 @@
+// telemetry/Interface.go
+
 package telemetry
 
 import (
@@ -5,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"strings"
+	"time"
 
 	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/trace"
@@ -30,8 +33,41 @@ type Telemetry interface {
 	// PostTrace posts a trace message with the given severity and properties
 	PostTrace(message string, severity string, properties map[string]string)
 
+	// RecordError records an error with the given attributes
+	RecordError(ctx context.Context, err error, attributes ...attribute.KeyValue)
+
+	// IncrementCounter increments a counter metric
+	IncrementCounter(ctx context.Context, name string, increment float64, attributes ...attribute.KeyValue)
+
+	// RecordGauge records a gauge metric
+	RecordGauge(ctx context.Context, name string, value float64, attributes ...attribute.KeyValue)
+
+	// LogInfo logs an info message
+	LogInfo(ctx context.Context, message string, attributes ...attribute.KeyValue)
+
+	// LogWarning logs a warning message
+	LogWarning(ctx context.Context, message string, attributes ...attribute.KeyValue)
+
+	// LogError logs an error message
+	LogError(ctx context.Context, message string, err error, attributes ...attribute.KeyValue)
+
+	// TrackRequest records an HTTP request as a span
+	TrackRequest(ctx context.Context, method, url string, duration time.Duration, statusCode int)
+
+	// TrackDependency records a dependency call as a span
+	TrackDependency(ctx context.Context, dependencyType, target string, duration time.Duration, success bool)
+
+	// TrackAvailability records an availability test
+	TrackAvailability(ctx context.Context, name string, duration time.Duration, success bool)
+
+	// SetUser sets the user ID for the current context
+	SetUser(ctx context.Context, id string)
+
+	// SetSession sets the session ID for the current context
+	SetSession(ctx context.Context, id string)
+
 	// Shutdown shuts down the telemetry provider
-	Shutdown(ctx context.Context)
+	Shutdown(ctx context.Context) error
 }
 
 // TelemetryType represents the type of telemetry implementation to use
@@ -45,25 +81,21 @@ const (
 )
 
 // NewTelemetry creates and returns the appropriate telemetry implementation
-// based on the configuration specified in environment variables.
 func NewTelemetry() (Telemetry, error) {
-	telemetryType := getTelemetryType()
+	telemetryType := os.Getenv("TELEMETRY_TYPE")
+	serviceName := os.Getenv("SERVICE_NAME")
+	if serviceName == "" {
+		serviceName = "unknown-service"
+	}
 
 	switch telemetryType {
-	case TelemetryTypeOpenTelemetry:
+	case "opentelemetry", "otel", "":
 		traceEnabled := os.Getenv("OTEL_TRACE_ENABLED") == "true"
 		metricsEnabled := os.Getenv("OTEL_METRICS_ENABLED") == "true"
-		serviceName := os.Getenv("SERVICE_NAME")
-		if serviceName == "" {
-			serviceName = "unknown-service"
-		}
 		traceEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_TRACES_ENDPOINT")
 		metricEndpoint := os.Getenv("OTEL_EXPORTER_OTLP_METRICS_ENDPOINT")
-		return newOpenTelemetry(serviceName, traceEndpoint, metricEndpoint, traceEnabled, metricsEnabled)
-
-	case TelemetryTypeAppInsights:
-		return newAppInsightsTelemetry()
-
+		return NewOpenTelemetry(serviceName, traceEndpoint, metricEndpoint, traceEnabled, metricsEnabled)
+	// Add cases for other telemetry types if needed
 	default:
 		return nil, fmt.Errorf("unknown telemetry type: %s", telemetryType)
 	}
