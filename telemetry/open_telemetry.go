@@ -34,7 +34,7 @@ type OpenTelemetry struct {
 
 // NewOpenTelemetry creates and initializes a new OpenTelemetry instance
 func NewOpenTelemetry(serviceName, traceEndpoint, metricEndpoint string, traceEnabled, metricsEnabled bool) (*OpenTelemetry, error) {
-	logger.Log.Info("OpenTelemetry Configuration",
+	logger.Log.Info("OpenTelemetry Configuration ",
 		zap.String("serviceName", serviceName),
 		zap.String("traceEndpoint", traceEndpoint),
 		zap.String("metricEndpoint", metricEndpoint),
