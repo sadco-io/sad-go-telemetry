@@ -34,6 +34,12 @@ type OpenTelemetry struct {
 
 // NewOpenTelemetry creates and initializes a new OpenTelemetry instance
 func NewOpenTelemetry(serviceName, traceEndpoint, metricEndpoint string, traceEnabled, metricsEnabled bool) (*OpenTelemetry, error) {
+	logger.Log.Info("OpenTelemetry Configuration ",
+		zap.String("serviceName", serviceName),
+		zap.String("traceEndpoint", traceEndpoint),
+		zap.String("metricEndpoint", metricEndpoint),
+		zap.Bool("traceEnabled", traceEnabled),
+		zap.Bool("metricsEnabled", metricsEnabled))
 	ctx := context.Background()
 
 	res, err := resource.New(ctx,
@@ -54,7 +60,11 @@ func NewOpenTelemetry(serviceName, traceEndpoint, metricEndpoint string, traceEn
 			otlptracegrpc.WithInsecure(),
 		)
 		if err != nil {
-			return nil, fmt.Errorf("failed to create trace exporter: %w", err)
+			logger.Log.Error("Failed to create OpenTelemetry exporter",
+				zap.Error(err),
+				zap.String("endpoint", metricEndpoint),
+				zap.Bool("metricsEnabled", metricsEnabled))
+			return nil, fmt.Errorf("failed to create metric exporter: %w", err)
 		}
 
 		tp = sdktrace.NewTracerProvider(
